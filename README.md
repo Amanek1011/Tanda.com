@@ -127,9 +127,19 @@ python manage.py test
 
 ## Запуск на сервере
 
-1. В `.env`: `DEBUG=0`, свой `SECRET_KEY`, домен в `ALLOWED_HOSTS` и `CSRF_TRUSTED_ORIGINS`, `HTTPS=1`, если сайт открывается по https.
-2. `python manage.py collectstatic` и раздача папок `staticfiles/` и `media/` веб-сервером (nginx). Папку `private_media/` наружу не открывайте.
-3. Запуск через gunicorn: `pip install gunicorn`, затем `gunicorn tanda.wsgi`.
+### Render
+
+В корне репозитория подготовлен `render.yaml` — Blueprint создаёт веб-сервис, PostgreSQL и постоянный диск для загруженных фото (включая приватные фото водительских прав).
+
+1. Загрузите проект в GitHub и в Render выберите **New → Blueprint**, подключите репозиторий и нажмите **Apply**.
+2. Сервис, диск и PostgreSQL должны быть в одном регионе. В Blueprint используется Сингапур; веб-сервис и постоянный диск платные. В Render можно заменить тариф Postgres на доступный в вашем аккаунте.
+3. При создании Blueprint задайте `ANTHROPIC_API_KEY` из https://console.anthropic.com, если нужен ИИ. Секреты в репозиторий добавлять не нужно.
+4. При запуске Render применит миграции и безопасно добавит демо-объявления. Создайте администратора через **Shell** веб-сервиса: `python manage.py createsuperuser`.
+5. После деплоя откройте выданный Render URL. При добавлении собственного домена задайте его в переменных `ALLOWED_HOSTS` и `CSRF_TRUSTED_ORIGINS` веб-сервиса.
+
+Статика раздаётся через WhiteNoise; PostgreSQL подключается через `DATABASE_URL`. Публичные фото объявлений доступны из `MEDIA_ROOT` на постоянном диске `/var/data`; закрытые фото прав лежат отдельно в `PRIVATE_MEDIA_ROOT` и не публикуются. Локальная SQLite-база, пользователи и пользовательские фото автоматически в Render не переносятся.
+
+Для самостоятельного сервера используйте `DEBUG=0`, уникальный `SECRET_KEY`, `ALLOWED_HOSTS` и `CSRF_TRUSTED_ORIGINS` с вашим доменом, HTTPS, PostgreSQL и постоянное защищённое хранилище для `MEDIA_ROOT` и `PRIVATE_MEDIA_ROOT`. Не публикуйте `private_media/` напрямую. Статика собирается командой `python manage.py collectstatic --no-input`; приложение запускается через Gunicorn.
 
 Для быстрого показа на хакатоне хватит `DEBUG=1` и `python manage.py runserver 0.0.0.0:8000`. Чтобы открыть сайт с телефона в той же Wi-Fi сети, добавьте IP компьютера в `ALLOWED_HOSTS`.
 

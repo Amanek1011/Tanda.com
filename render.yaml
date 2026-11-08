@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: tanda-django
+    runtime: python
+    plan: starter
+    region: singapore
+    buildCommand: bash build.sh
+    preDeployCommand: python manage.py migrate --noinput
+    startCommand: "python manage.py seed_demo && gunicorn tanda.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    healthCheckPath: /
+    autoDeploy: true
+    disk:
+      name: tanda-media
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tanda-db
+          property: connectionString
+      - key: MEDIA_ROOT
+        value: /var/data/media
+      - key: PRIVATE_MEDIA_ROOT
+        value: /var/data/private_media
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+databases:
+  - name: tanda-db
+    databaseName: tanda
+    user: tanda
+    plan: basic-256mb
+    region: singapore

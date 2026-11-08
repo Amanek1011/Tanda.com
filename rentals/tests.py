@@ -4,6 +4,7 @@ import json
 import shutil
 import tempfile
 from datetime import timedelta
+from pathlib import Path
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -88,6 +89,25 @@ class SiteTestCase(TestCase):
                 "gear": "автомат", "fuel": "бензин", "price": 3000, "has_osago": True}
         data.update(kw)
         return Listing.objects.create(owner=owner, **data)
+
+
+class MediaServingTests(TestCase):
+    @override_settings(DEBUG=False)
+    def test_public_media_is_served_in_production_without_exposing_private_media(self):
+        with tempfile.TemporaryDirectory() as media_root, tempfile.TemporaryDirectory() as private_root:
+            public_photo = Path(media_root) / "listings" / "car.jpg"
+            public_photo.parent.mkdir(parents=True)
+            public_photo.write_bytes(b"public image")
+
+            private_photo = Path(private_root) / "licenses" / "license.jpg"
+            private_photo.parent.mkdir(parents=True)
+            private_photo.write_bytes(b"private image")
+
+            with override_settings(MEDIA_ROOT=media_root, PRIVATE_MEDIA_ROOT=private_root):
+                response = self.client.get("/media/listings/car.jpg")
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(b"".join(response.streaming_content), b"public image")
+                self.assertEqual(self.client.get("/media/licenses/license.jpg").status_code, 404)
 
 
 class AccountTests(SiteTestCase):
