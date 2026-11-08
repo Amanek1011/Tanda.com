@@ -1,0 +1,34 @@
+{% extends "rentals/base.html" %}
+{% block title %}Регистрация — TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="auth">
+    <div class="page-head" style="border:0;margin-bottom:0;padding-bottom:22px">
+      <h1>Регистрация</h1>
+      <p>Аккаунт нужен, чтобы бронировать и сдавать машины. Вход по номеру телефона и паролю.</p>
+    </div>
+    <form class="panel form" method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% if form.non_field_errors %}<p class="err show full">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+      {% include "rentals/_field.html" with field=form.name cls="full" %}
+      {% include "rentals/_field.html" with field=form.phone %}
+      {% include "rentals/_field.html" with field=form.city %}
+      <div class="full">
+        <p class="label" style="margin-bottom:8px">{{ form.role.label }}</p>
+        <div class="roles">{% for radio in form.role %}<label for="{{ radio.id_for_label }}">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+        {% for error in form.role.errors %}<span class="ferr">{{ error }}</span>{% endfor %}
+      </div>
+      {% include "rentals/_field.html" with field=form.password1 show_help=True %}
+      {% include "rentals/_field.html" with field=form.password2 %}
+      <div class="full check-wrap">
+        <label class="check" for="{{ form.agree.id_for_label }}">{{ form.agree }} {{ form.agree.label }}</label>
+        {% for error in form.agree.errors %}<span class="ferr">{{ error }}</span>{% endfor %}
+      </div>
+      <button class="btn full" type="submit">Создать аккаунт</button>
+      <p class="full muted" style="font-size:13px">Телефон видите только вы. Владелец машины увидит его, когда подтвердит вашу заявку.</p>
+    </form>
+    <p class="alt">Уже есть аккаунт? <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Войти</a></p>
+  </div>
+</div>
+{% endblock %}

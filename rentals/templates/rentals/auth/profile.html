@@ -1,0 +1,26 @@
+{% extends "rentals/base.html" %}
+{% block title %}Профиль — TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="auth">
+    <a class="back" href="{% url 'cabinet' %}">← Личный кабинет</a>
+    <div class="page-head" style="border:0;margin-bottom:0;padding:0 0 22px">
+      <h1>Профиль</h1>
+      <p>Измените данные и сохраните. Новый номер телефона станет вашим логином.</p>
+    </div>
+    <form class="panel form" method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<p class="err show full">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+      {% include "rentals/_field.html" with field=form.name cls="full" %}
+      {% include "rentals/_field.html" with field=form.phone %}
+      {% include "rentals/_field.html" with field=form.city %}
+      <div class="full">
+        <p class="label" style="margin-bottom:8px">{{ form.role.label }}</p>
+        <div class="roles">{% for radio in form.role %}<label for="{{ radio.id_for_label }}">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+      </div>
+      <button class="btn full" type="submit">Сохранить</button>
+    </form>
+    <p class="alt"><a href="{% url 'password_change' %}">Сменить пароль</a></p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "rentals/base.html" %}
+{% block title %}Страница не найдена — TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="page-head">
+    <h1>Такой страницы нет</h1>
+    <p>Возможно, объявление сняли с публикации или ссылка устарела.</p>
+  </div>
+  <a class="btn" href="{% url 'catalog' %}">В каталог</a>
+</div>
+{% endblock %}

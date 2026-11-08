@@ -1,0 +1,79 @@
+{% extends "rentals/base.html" %}
+{% load tanda %}
+{% block title %}{% if listing %}Изменить объявление{% else %}Сдать машину{% endif %} — TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="page-head">
+    <h1>{% if listing %}Изменить объявление{% else %}Сдать машину{% endif %}</h1>
+    {% if listing %}
+      <p>Изменения сразу появятся в каталоге. Уже отправленные заявки сохранят прежнюю цену.</p>
+    {% else %}
+      <p>Разместите легковую машину или бусик. Объявление сохранится в базе TANDA и сразу появится в каталоге. Вы получаете {{ share_car }}% от аренды легковой машины и {{ share_van }}% от аренды бусика.</p>
+    {% endif %}
+  </div>
+  <div class="two">
+    {% if form %}
+      <form class="panel form" method="post" enctype="multipart/form-data" novalidate data-owner-form data-suggest-url="{% url 'api_suggest_price' %}">
+        {% csrf_token %}
+        <div class="full who"><span class="avatar" aria-hidden="true">{{ user.get_full_name|default:user.username|initials }}</span><span>{% if listing %}Редактирует{% else %}Публикует{% endif %} <b>{{ user.get_full_name|default:user.username }}</b></span></div>
+        {% if form.non_field_errors %}<p class="err show full">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+        {% include "rentals/_field.html" with field=form.kind %}
+        {% include "rentals/_field.html" with field=form.city %}
+        {% include "rentals/_field.html" with field=form.title cls="full" %}
+        {% include "rentals/_field.html" with field=form.year %}
+        {% include "rentals/_field.html" with field=form.seats %}
+        {% include "rentals/_field.html" with field=form.gear cls="car-only" %}
+        {% include "rentals/_field.html" with field=form.fuel cls="car-only" %}
+        <label class="full" for="{{ form.price.id_for_label }}"><span data-price-label>{{ form.price.label }}</span>{{ form.price }}{% for error in form.price.errors %}<span class="ferr">{{ error }}</span>{% endfor %}</label>
+        {% include "rentals/_field.html" with field=form.description cls="full" %}
+        <div class="full ai-row">
+          <button type="button" class="btn quiet sm" data-suggest>Подсказать цену и описание</button>
+          <span class="status" data-suggest-status></span>
+        </div>
+        <div class="ai-note full" data-suggest-note hidden></div>
+        <label class="full" for="{{ form.photo.id_for_label }}">Фото машины
+          <span class="file{% if listing.photo %} ok{% endif %}" data-file-box data-done="Фото добавлено. Нажмите, чтобы заменить">{% if listing.photo %}<img src="{{ listing.photo.url }}" alt="">Фото добавлено. Нажмите, чтобы заменить{% else %}Нажмите, чтобы добавить фото{% endif %}</span>
+          {{ form.photo }}{% for error in form.photo.errors %}<span class="ferr">{{ error }}</span>{% endfor %}
+        </label>
+        <div class="full check-wrap">
+          <label class="check" for="{{ form.has_osago.id_for_label }}">{{ form.has_osago }} {{ form.has_osago.label }}</label>
+          {% for error in form.has_osago.errors %}<span class="ferr">{{ error }}</span>{% endfor %}
+        </div>
+        <button class="btn full" type="submit">{% if listing %}Сохранить изменения{% else %}Опубликовать объявление{% endif %}</button>
+      </form>
+    {% else %}
+      <div class="panel">
+        <h3>Сначала войдите в аккаунт</h3>
+        <p class="muted" style="margin:8px 0 18px">Объявление публикуется от имени владельца, поэтому нужен аккаунт TANDA. Регистрация займёт минуту: имя, телефон и пароль.</p>
+        <div class="actions">
+          <a class="btn" href="{{ register_url }}">Зарегистрироваться</a>
+          <a class="tlink" href="{{ login_url }}">У меня есть аккаунт</a>
+        </div>
+      </div>
+    {% endif %}
+
+    <aside class="panel earn" aria-label="Расчёт заработка" data-earn data-comm-car="{{ comm_car }}" data-comm-van="{{ comm_van }}">
+      <p class="label">Ваш заработок в месяц</p>
+      <div class="big num" data-earn-big>{{ earn.owner_earn|money }} сом</div>
+      <p class="muted" data-earn-text>при 12 днях аренды в месяц</p>
+      {% if not form %}
+        <div class="form" style="margin-top:18px">
+          <label for="eKind">Транспорт<select id="eKind" data-earn-kind><option value="car">Легковая</option><option value="van">Бусик с водителем</option></select></label>
+          <label for="ePrice"><span data-price-label>Цена, сом в сутки</span><input type="number" id="ePrice" min="500" step="100" value="3000" data-earn-price></label>
+        </div>
+      {% endif %}
+      <label class="range-l" for="eRange"><span>Дней аренды в месяц: <b data-earn-days>12</b></span><input type="range" id="eRange" class="range" min="4" max="26" value="12"></label>
+      <div class="breakdown" data-earn-calc>
+        <div><span>Аренда: {{ earn_price|money }} × 12</span><b class="num">{{ earn.subtotal|money }} сом</b></div>
+        <div><span>Комиссия TANDA {{ earn.commission_percent }}%</span><b class="num">−{{ earn.commission|money }} сом</b></div>
+        <div class="tot"><span>Вам</span><span class="num">{{ earn.owner_earn|money }} сом</span></div>
+      </div>
+      <ul class="incl">
+        <li>Проверяем паспорт и права каждого арендатора</li>
+        <li>Осмотр по фото при выдаче и возврате</li>
+        <li>Вы сами подтверждаете каждую заявку</li>
+      </ul>
+    </aside>
+  </div>
+</div>
+{% endblock %}

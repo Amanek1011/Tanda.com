@@ -1,0 +1,73 @@
+{% extends "rentals/base.html" %}
+{% load tanda %}
+{% block title %}{{ listing.title }} — аренда на TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <a class="back" href="{% url 'catalog' %}?from={{ date_from|date:'Y-m-d' }}&amp;to={{ date_to|date:'Y-m-d' }}#catalog">← Все машины</a>
+  {% if not listing.is_active %}<p class="ai-note" style="margin-bottom:16px">Объявление снято с публикации и не видно в каталоге.</p>{% endif %}
+  <div class="sheet">
+    <div class="mgrid">
+      <div class="mleft">
+        <div class="pic">{% vehicle_pic listing %}</div>
+        <div class="inner">
+          <p class="label">{{ listing.get_kind_display }} · {{ listing.city }}</p>
+          <h1>{{ listing.title }}</h1>
+          <p class="muted">Владелец {{ listing.owner_display }} · {% if listing.rating %}★ {{ listing.rating }}, {{ listing.trips_label }}{% else %}новое объявление{% endif %}</p>
+          <div class="chips">
+            {% if listing.year %}<span class="chip">{{ listing.year }}</span>{% endif %}
+            <span class="chip">{{ listing.seats_label }}</span>
+            {% if listing.is_car %}{% if listing.gear %}<span class="chip">{{ listing.gear }}</span>{% endif %}{% if listing.fuel %}<span class="chip">{{ listing.fuel }}</span>{% endif %}{% else %}<span class="chip">водитель включён</span>{% endif %}
+            {% if listing.has_osago %}<span class="chip">ОСАГО</span>{% endif %}
+          </div>
+          <p>{{ listing.description|default:"Владелец пока не добавил описание."|linebreaksbr }}</p>
+          <ul class="incl">
+            <li>Действующее ОСАГО</li>
+            <li>Осмотр по фото при выдаче и возврате</li>
+            <li>{% if listing.is_car %}Депозит {{ deposit|money }} сом, вернём после осмотра{% else %}Водитель включён в цену дня{% endif %}</li>
+            <li>Заявку подтверждает владелец</li>
+          </ul>
+          <p style="margin-top:18px"><button class="tlink" type="button" data-ask="{{ ask_text }}">Спросить помощника об этой машине</button></p>
+        </div>
+      </div>
+
+      <div class="mright">
+        <h2>{{ listing.price|money }} сом / {{ listing.unit }}</h2>
+        {% if is_mine %}
+          <p class="ai-note">Это ваше объявление: так его видят арендаторы. Заявки на него приходят в личный кабинет.</p>
+          <p class="label">Пример на {{ quote.days }} {{ quote.days|ru_plural:"день,дня,дней" }}</p>
+          <div class="breakdown">{% include "rentals/_quote.html" %}</div>
+          <div class="actions">
+            <a class="btn" href="{% url 'listing_edit' listing.pk %}">Изменить</a>
+            <a class="tlink" href="{% url 'cabinet' %}#listings">Мои объявления</a>
+          </div>
+        {% elif form %}
+          <form class="form" method="post" enctype="multipart/form-data" novalidate data-booking data-price="{{ listing.price }}" data-fee="{{ quote.fee_percent }}" data-deposit="{% if listing.is_car %}{{ deposit }}{% else %}0{% endif %}">
+            {% csrf_token %}
+            {% if form.non_field_errors %}<p class="err show full">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+            {% include "rentals/_field.html" with field=form.date_from %}
+            {% include "rentals/_field.html" with field=form.date_to %}
+            <div class="breakdown full" data-calc>{% include "rentals/_quote.html" %}</div>
+            <div class="full who"><span class="avatar" aria-hidden="true">{{ user.get_full_name|default:user.username|initials }}</span><span>Бронирует <b>{{ user.get_full_name|default:user.username }}</b></span></div>
+            {% if form.license_photo %}
+              <label class="full" for="{{ form.license_photo.id_for_label }}">Фото водительских прав<span class="file" data-file-box data-done="Права загружены. Нажмите, чтобы заменить">Нажмите, чтобы загрузить фото прав</span>{{ form.license_photo }}{% for error in form.license_photo.errors %}<span class="ferr">{{ error }}</span>{% endfor %}</label>
+            {% endif %}
+            <div class="full check-wrap">
+              <label class="check" for="{{ form.agree.id_for_label }}">{{ form.agree }} {{ form.agree.label }}</label>
+              {% for error in form.agree.errors %}<span class="ferr">{{ error }}</span>{% endfor %}
+            </div>
+            <button class="btn full" type="submit">Отправить заявку владельцу</button>
+            {% if listing.is_car %}<p class="full muted" style="font-size:13px">Фото прав видят только владелец машины и TANDA. В каталоге оно не публикуется.</p>{% endif %}
+          </form>
+        {% elif not listing.is_active %}
+          <p class="muted">Сейчас объявление не принимает заявки.</p>
+        {% else %}
+          <p class="label">{{ date_from|date:"j E" }} — {{ date_to|date:"j E" }}</p>
+          <div class="breakdown">{% include "rentals/_quote.html" %}</div>
+          <p class="muted">Чтобы забронировать, войдите в аккаунт TANDA. Регистрация займёт минуту.</p>
+          <a class="btn wide" href="{{ login_url }}">Войти и забронировать</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

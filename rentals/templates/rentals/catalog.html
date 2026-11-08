@@ -1,0 +1,97 @@
+{% extends "rentals/base.html" %}
+{% load tanda %}
+{% block content %}
+<div class="hero{% if hero_image %} has-photo{% endif %}"{% if hero_image %} style="background-image:url('{{ hero_image }}')"{% endif %}>
+  <div class="wrap hero-in">
+    <h1 class="mega">Выбирай<br>машину</h1>
+    <p class="sub">Легковые машины и бусики с водителем напрямую от владельцев по всему Кыргызстану.</p>
+    <form class="search" role="search" method="get" action="{% url 'catalog' %}#catalog">
+      <div class="field">
+        <label for="fCity">Город</label>
+        <select id="fCity" name="city">
+          <option value="all">Все города</option>
+          {% for c in cities %}<option value="{{ c }}"{% if c == city %} selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="fFrom">С</label><input type="date" id="fFrom" name="from" value="{{ date_from|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}" data-date-from></div>
+      <div class="field"><label for="fTo">По</label><input type="date" id="fTo" name="to" value="{{ date_to|date:'Y-m-d' }}" min="{{ date_from|date:'Y-m-d' }}" data-date-to></div>
+      <div class="field">
+        <label for="fType">Транспорт</label>
+        <select id="fType" name="type">
+          <option value="all">Любой</option>
+          <option value="car"{% if kind == 'car' %} selected{% endif %}>Легковые</option>
+          <option value="van"{% if kind == 'van' %} selected{% endif %}>Бусики</option>
+        </select>
+      </div>
+      <input type="hidden" name="sort" value="{{ sort }}">
+      <button class="btn" type="submit">Найти</button>
+    </form>
+    <p class="facts"><span>ОСАГО у каждой машины</span><span>Проверка паспорта и прав</span><span>Осмотр по фото при выдаче и возврате</span></p>
+  </div>
+</div>
+
+<div class="wrap">
+  <form class="ask" data-ask-form>
+    <label for="aiAskInput">Не знаете, что выбрать?</label>
+    <input id="aiAskInput" type="text" placeholder="Например: нас 12 человек, едем на Иссык-Куль на 3 дня" maxlength="1000">
+    <button class="btn quiet sm" type="submit">Спросить помощника</button>
+  </form>
+
+  <section class="sec" id="catalog">
+    <div class="sec-head">
+      <h2>Доступно на ваши даты</h2>
+      <div class="tools">
+        <nav class="tabs" aria-label="Тип транспорта">
+          {% for t in tabs %}<a class="tab{% if t.value == kind %} on{% endif %}" href="{{ t.url }}"{% if t.value == kind %} aria-current="true"{% endif %}>{{ t.label }}</a>{% endfor %}
+        </nav>
+        <form method="get" action="{% url 'catalog' %}#catalog" data-autosubmit>
+          <input type="hidden" name="city" value="{{ city }}">
+          <input type="hidden" name="type" value="{{ kind }}">
+          <input type="hidden" name="from" value="{{ date_from|date:'Y-m-d' }}">
+          <input type="hidden" name="to" value="{{ date_to|date:'Y-m-d' }}">
+          <label class="sr" for="fSort">Сортировка</label>
+          <select class="sel" id="fSort" name="sort">
+            {% for value, label in sorts %}<option value="{{ value }}"{% if value == sort %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <noscript><button class="btn quiet sm" type="submit">Показать</button></noscript>
+        </form>
+      </div>
+    </div>
+    <p class="found">{{ found }} {{ found|ru_plural:"предложение,предложения,предложений" }} · {{ date_from|date:"j E" }} — {{ date_to|date:"j E" }}, {{ days }} {{ days|ru_plural:"день,дня,дней" }}</p>
+    <div class="grid">
+      {% for l in listings %}
+        {% include "rentals/_card.html" %}
+      {% empty %}
+        <div class="empty">
+          {% if catalog_empty %}
+            В каталоге пока пусто. <a class="tlink" href="{% url 'listing_create' %}">Разместите свою машину первой</a>.
+            {% if seed_hint %}<br><br>Чтобы добавить демо-машины, выполните в терминале <code>python manage.py seed_demo</code>.{% endif %}
+          {% else %}
+            На эти даты здесь нет свободного транспорта. Выберите другие даты или город или спросите помощника.
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="split">
+    <div>
+      <h2>Осмотр по фото за минуту</h2>
+      <p>При выдаче и при возврате машину фотографируют с одних и тех же ракурсов. ИИ сравнивает снимки и отмечает новые царапины и вмятины. Владелец и арендатор видят одинаковый результат, поэтому спорить не о чем.</p>
+      <a class="btn" href="{% url 'inspect' %}">Попробовать</a>
+    </div>
+    <div class="pair" aria-hidden="true">
+      <figure>{% car_drawing "car" "#C9CCD1" %}<figcaption>При выдаче</figcaption></figure>
+      <figure>{% car_drawing "car" "#C9CCD1" %}<figcaption>При возврате</figcaption><i class="mark" style="left:47%;top:49%;width:17%;height:14%"></i></figure>
+    </div>
+  </section>
+
+  <section class="owner">
+    <div>
+      <h2>Сдайте свою машину</h2>
+      <p>Машина за 3 000 сом в сутки при 12 днях аренды в месяц приносит владельцу около 28 800 сом. Комиссия TANDA: 20% с легковых машин и 15% с бусиков.</p>
+    </div>
+    <a class="btn" href="{% url 'listing_create' %}">Разместить объявление</a>
+  </section>
+</div>
+{% endblock %}

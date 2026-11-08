@@ -1,0 +1,4 @@
+{% load tanda %}<div><span>{{ listing.price|money }} × {{ quote.days }} {{ quote.days|ru_plural:"день,дня,дней" }}</span><b class="num">{{ quote.subtotal|money }} сом</b></div>
+<div><span>Сервисный сбор {{ quote.fee_percent }}%</span><b class="num">{{ quote.fee|money }} сом</b></div>
+<div class="tot"><span>Итого</span><span class="num">{{ quote.total|money }} сом</span></div>
+{% if listing.is_car %}<div class="note"><span>Плюс депозит {{ deposit|money }} сом, вернём после осмотра</span></div>{% endif %}

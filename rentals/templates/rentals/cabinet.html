@@ -1,0 +1,60 @@
+{% extends "rentals/base.html" %}
+{% load tanda %}
+{% block title %}Личный кабинет — TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="page-head">
+    <h1>Личный кабинет</h1>
+    <p>Профиль, ваши поездки, объявления и заявки на ваши машины.</p>
+  </div>
+
+  <div class="panel prof">
+    <div class="prof-id">
+      <span class="avatar" aria-hidden="true">{{ user.get_full_name|default:user.username|initials }}</span>
+      <div>
+        <h2>{{ user.get_full_name|default:user.username }}</h2>
+        <p>{{ profile.city }} · {{ profile.get_role_display }}{% if profile.phone %} · {{ profile.phone_display }}{% endif %}</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn quiet sm" href="{% url 'profile_edit' %}">Изменить профиль</a>
+      <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button class="tlink" type="submit">Выйти</button></form>
+    </div>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><span>Мои поездки</span><b class="num">{{ trips|length }}</b></div>
+    <div class="tile"><span>Новые заявки</span><b class="num">{{ new_count }}</b></div>
+    <div class="tile"><span>Мои объявления</span><b class="num">{{ mine|length }}</b></div>
+    <div class="tile"><span>Заработано</span><b class="num">{{ earned|money }} сом</b></div>
+  </div>
+  {% if user.is_staff %}<p class="muted" style="font-size:13px">Вы администратор TANDA: заявки на демо-объявления приходят вам.</p>{% endif %}
+
+  <div class="cab-h" id="incoming"><h3>Заявки на мои машины</h3></div>
+  {% for b in incoming %}
+    {% include "rentals/_booking_row.html" with mode="owner" %}
+  {% empty %}
+    <div class="empty-s">Заявок пока нет. Когда кто-то забронирует вашу машину, заявка появится здесь.</div>
+  {% endfor %}
+
+  <div class="cab-h" id="trips"><h3>Мои поездки</h3><a class="tlink" href="{% url 'catalog' %}">Найти машину</a></div>
+  {% for b in trips %}
+    {% include "rentals/_booking_row.html" with mode="renter" %}
+  {% empty %}
+    <div class="empty-s">Вы ещё ничего не бронировали.</div>
+  {% endfor %}
+
+  <div class="cab-h" id="listings"><h3>Мои объявления</h3><a class="tlink" href="{% url 'listing_create' %}">Разместить машину</a></div>
+  {% for l in mine %}
+    {% include "rentals/_listing_row.html" %}
+  {% empty %}
+    <div class="empty-s">У вас пока нет объявлений.</div>
+  {% endfor %}
+
+  <div class="cab-h" id="account"><h3>Аккаунт</h3></div>
+  <div class="panel actions">
+    <a class="tlink" href="{% url 'password_change' %}">Сменить пароль</a>
+    <form method="post" action="{% url 'account_delete' %}" class="inline">{% csrf_token %}<button class="tlink danger" type="submit" data-confirm="Точно удалить аккаунт? Нажмите ещё раз">Удалить аккаунт</button></form>
+  </div>
+</div>
+{% endblock %}

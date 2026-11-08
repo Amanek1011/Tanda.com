@@ -1,0 +1,7 @@
+{% load tanda %}<a class="card" href="{% url 'listing_detail' l.pk %}?{{ trip_query }}">
+  <div class="pic">{% vehicle_pic l %}{% if l.is_new %}<span class="tag new">Новое</span>{% elif l.kind == 'van' %}<span class="tag">С водителем</span>{% endif %}</div>
+  <div class="row1"><h3>{{ l.title }}</h3><span class="rate">{% if l.rating %}★ {{ l.rating }} <small>({{ l.trips }})</small>{% else %}<small>Новое</small>{% endif %}</span></div>
+  <p class="meta">{{ l.meta_line }}</p>
+  <p class="meta">{{ l.city }} · владелец {{ l.owner_display }}</p>
+  <p class="price"><b class="num">{{ l.price|money }} сом</b> / {{ l.unit }} <span>· {{ l.total_for_days|money }} сом за {{ days }} {{ days|ru_plural:"день,дня,дней" }}</span></p>
+</a>

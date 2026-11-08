@@ -1,0 +1,38 @@
+{% extends "rentals/base.html" %}
+{% block title %}Осмотр по фото — TANDA{% endblock %}
+{% block content %}
+<div class="wrap" data-inspect data-url="{% url 'api_inspect' %}">
+  <div class="page-head">
+    <h1>Осмотр по фото</h1>
+    <p>Загрузите фото машины при выдаче и при возврате, снятые с одного ракурса. ИИ сравнит снимки и отметит царапины, вмятины и сколы, которых не было раньше.</p>
+  </div>
+  <div class="slots">
+    <label class="slot" for="inBefore" data-slot="before">
+      <span class="badge">При выдаче</span>
+      <input type="file" accept="image/*" id="inBefore" class="sr">
+      <span class="ph"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 16V7.8l-3.6 3.6L6 10l6-6 6 6-1.4 1.4L13 7.8V16h-2zm-6 4v-5h2v3h10v-3h2v5H5z"/></svg><b>Фото до поездки</b>Нажмите или перетащите фото</span>
+    </label>
+    <label class="slot" for="inAfter" data-slot="after">
+      <span class="badge">При возврате</span>
+      <input type="file" accept="image/*" id="inAfter" class="sr">
+      <span class="ph"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 16V7.8l-3.6 3.6L6 10l6-6 6 6-1.4 1.4L13 7.8V16h-2zm-6 4v-5h2v3h10v-3h2v5H5z"/></svg><b>Фото после поездки</b>Нажмите или перетащите фото</span>
+    </label>
+  </div>
+  <div class="insp-actions">
+    <button class="btn" id="go" type="button" disabled>Сравнить фото</button>
+    <button class="tlink" id="iReset" type="button">Сбросить</button>
+    <span class="status" id="iStatus" aria-live="polite"></span>
+  </div>
+  {% if not ai_enabled %}<p class="ai-note">Осмотр заработает, когда в файл .env добавят ANTHROPIC_API_KEY.</p>{% endif %}
+  <div class="err" id="iErr"></div>
+  <section class="result" id="iResult" aria-live="polite">
+    <div class="verdict"><span class="pill" id="iPill"></span><span id="iSummary"></span></div>
+    <div class="rgrid">
+      <div class="stagebox" id="iStage"><img id="iImg" alt="Фото при возврате с отмеченными повреждениями"></div>
+      <div class="dlist" id="iList"></div>
+    </div>
+    <p class="muted small">Рамки показывают примерное место повреждения. Спорные случаи проверяет менеджер TANDA по этим же фото.</p>
+  </section>
+  <p class="tip">Для демо сфотографируйте одну машину дважды с одного ракурса, а перед вторым снимком приклейте на дверь полоску малярного скотча. ИИ найдёт разницу.</p>
+</div>
+{% endblock %}

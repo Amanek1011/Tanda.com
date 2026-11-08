@@ -1,0 +1,1 @@
+{% load tanda %}<div class="recs">{% for l in items %}<a class="rec" href="{% url 'listing_detail' l.pk %}?from={{ trip_from }}&amp;to={{ trip_to }}"><span class="mini">{% vehicle_pic l %}</span><span class="rt"><b>{{ l.title }}</b><small>{{ l.city }} · {{ l.price|money }} сом / {{ l.unit }}</small></span></a>{% endfor %}</div>

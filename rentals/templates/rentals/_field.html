@@ -1,0 +1,1 @@
+<label{% if cls %} class="{{ cls }}"{% endif %} for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if show_help and field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}{% for error in field.errors %}<span class="ferr">{{ error }}</span>{% endfor %}</label>

@@ -1,0 +1,18 @@
+{% load tanda %}<article class="req{% if not l.is_active %} off{% endif %}">
+  <a class="mini" href="{{ l.get_absolute_url }}" aria-hidden="true" tabindex="-1">{% vehicle_pic l %}</a>
+  <div>
+    <p class="label">{{ l.get_kind_display }} · {{ l.city }}{% if not l.is_active %} · снято с публикации{% endif %}</p>
+    <h4><a href="{{ l.get_absolute_url }}">{{ l.title }}</a></h4>
+    <p>{{ l.price|money }} сом / {{ l.unit }} · {{ l.meta_line }}</p>
+  </div>
+  <div class="acts">
+    <a class="tlink" href="{% url 'listing_edit' l.pk %}">Изменить</a>
+    <form method="post" action="{% url 'listing_toggle' l.pk %}" class="inline">{% csrf_token %}
+      {% if l.is_active %}
+        <button class="tlink danger" type="submit" data-confirm="Точно снять?">Снять с публикации</button>
+      {% else %}
+        <button class="tlink" type="submit">Вернуть в каталог</button>
+      {% endif %}
+    </form>
+  </div>
+</article>

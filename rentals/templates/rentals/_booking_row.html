@@ -1,0 +1,27 @@
+{% load tanda %}<article class="req">
+  <a class="mini" href="{{ b.get_absolute_url }}" aria-hidden="true" tabindex="-1">{% vehicle_pic b.listing %}</a>
+  <div>
+    <p class="label">{{ b.code }} · {{ b.date_from|date:"j E" }} — {{ b.date_to|date:"j E" }}, {{ b.days_label }}</p>
+    <h4><a href="{{ b.get_absolute_url }}">{{ b.listing.title }}</a></h4>
+    {% if mode == "owner" %}
+      <p>Арендатор: {{ b.renter.get_full_name|default:"без имени" }}{% if b.license_photo %} · права загружены{% endif %}{% if b.listing.is_demo %} · демо-объявление{% endif %}</p>
+      <p>Сумма {{ b.total|money }} сом · вам <b>{{ b.owner_earn|money }} сом</b></p>
+    {% else %}
+      <p>Владелец: {{ b.listing.owner_display }}</p>
+      <p>К оплате <b>{{ b.total|money }} сом</b></p>
+    {% endif %}
+  </div>
+  <div class="acts">
+    <span class="pill {{ b.status }}">{{ b.get_status_display }}</span>
+    {% if mode == "owner" and b.status == "new" %}
+      <div class="actions">
+        <form method="post" action="{% url 'booking_action' b.pk 'confirm' %}" class="inline">{% csrf_token %}<input type="hidden" name="next" value="{% url 'cabinet' %}#incoming"><button class="btn sm" type="submit">Подтвердить</button></form>
+        <form method="post" action="{% url 'booking_action' b.pk 'decline' %}" class="inline">{% csrf_token %}<input type="hidden" name="next" value="{% url 'cabinet' %}#incoming"><button class="tlink" type="submit">Отклонить</button></form>
+      </div>
+    {% elif mode == "renter" and b.status == "new" %}
+      <form method="post" action="{% url 'booking_action' b.pk 'cancel' %}" class="inline">{% csrf_token %}<input type="hidden" name="next" value="{% url 'cabinet' %}#trips"><button class="tlink danger" type="submit" data-confirm="Точно отменить?">Отменить бронь</button></form>
+    {% elif b.status == "ok" %}
+      <a class="tlink" href="{{ b.get_absolute_url }}">{% if mode == "owner" %}Контакты арендатора{% else %}Контакты владельца{% endif %}</a>
+    {% endif %}
+  </div>
+</article>

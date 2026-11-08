@@ -1,0 +1,21 @@
+{% extends "rentals/base.html" %}
+{% block title %}Вход — TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="auth">
+    <div class="page-head" style="border:0;margin-bottom:0;padding-bottom:22px">
+      <h1>Вход в TANDA</h1>
+      <p>Введите номер телефона и пароль, которые указали при регистрации.</p>
+    </div>
+    <form class="panel form" method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% if form.non_field_errors %}<p class="err show full">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+      {% include "rentals/_field.html" with field=form.username cls="full" %}
+      {% include "rentals/_field.html" with field=form.password cls="full" %}
+      <button class="btn full" type="submit">Войти</button>
+    </form>
+    <p class="alt">Нет аккаунта? <a href="{% url 'register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Зарегистрироваться</a></p>
+  </div>
+</div>
+{% endblock %}

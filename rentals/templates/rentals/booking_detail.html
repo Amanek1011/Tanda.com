@@ -1,0 +1,66 @@
+{% extends "rentals/base.html" %}
+{% load tanda %}
+{% block title %}Заявка {{ booking.code }} — TANDA{% endblock %}
+{% block content %}
+<div class="wrap">
+  <a class="back" href="{% url 'cabinet' %}">← Личный кабинет</a>
+  <div class="sheet">
+    <div class="mgrid">
+      <div class="mleft">
+        <div class="pic">{% vehicle_pic listing %}</div>
+        <div class="inner">
+          <p class="label">Заявка {{ booking.code }} · {{ listing.get_kind_display }} · {{ listing.city }}</p>
+          <h1><a href="{{ listing.get_absolute_url }}">{{ listing.title }}</a></h1>
+          <p class="muted">{{ booking.date_from|date:"j E Y" }} — {{ booking.date_to|date:"j E Y" }}, {{ booking.days_label }}</p>
+          <p class="muted">Владелец: {{ listing.owner_display }} · Арендатор: {{ booking.renter.get_full_name|default:"без имени" }}</p>
+          <ol class="steps" style="margin-top:18px">
+            <li>Владелец подтверждает заявку</li>
+            <li>При выдаче машину фотографируют для осмотра</li>
+            <li>Поездка и возврат с повторным осмотром по фото</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="mright">
+        <span class="pill {{ booking.status }}" style="align-self:flex-start">{{ booking.get_status_display }}</span>
+        <h2>
+          {% if booking.status == "new" %}{% if can_manage %}Новая заявка на вашу машину{% else %}Ждём ответа владельца{% endif %}
+          {% elif booking.status == "ok" %}Бронь подтверждена
+          {% elif booking.status == "no" %}Владелец отклонил заявку
+          {% else %}Бронь отменена{% endif %}
+        </h2>
+
+        <div class="breakdown">
+          <div><span>{{ booking.price|money }} × {{ booking.days_label }}</span><b class="num">{{ booking.subtotal|money }} сом</b></div>
+          <div><span>Сервисный сбор</span><b class="num">{{ booking.fee|money }} сом</b></div>
+          <div class="tot"><span>Итого</span><span class="num">{{ booking.total|money }} сом</span></div>
+          {% if booking.deposit %}<div class="note"><span>Плюс депозит {{ booking.deposit|money }} сом, вернём после осмотра</span></div>{% endif %}
+          {% if can_manage %}<div class="note"><span>Владельцу после комиссии TANDA</span><b>{{ booking.owner_earn|money }} сом</b></div>{% endif %}
+        </div>
+
+        {% if booking.status == "ok" %}
+          {% if is_renter and owner_phone %}<div class="contact"><span class="label">Телефон владельца</span><b>{{ owner_phone }}</b></div>{% endif %}
+          {% if can_manage and renter_phone %}<div class="contact"><span class="label">Телефон арендатора</span><b>{{ renter_phone }}</b></div>{% endif %}
+        {% elif booking.status == "new" %}
+          <p class="muted">Телефоны откроются обеим сторонам, когда владелец подтвердит заявку.</p>
+        {% endif %}
+
+        {% if booking.license_photo %}
+          {% if can_manage or is_renter %}<a class="tlink" href="{% url 'booking_license' booking.pk %}" target="_blank" rel="noopener">Посмотреть фото прав</a>{% endif %}
+        {% endif %}
+
+        <div class="actions" style="margin-top:8px">
+          {% if can_manage and booking.status == "new" %}
+            <form method="post" action="{% url 'booking_action' booking.pk 'confirm' %}" class="inline">{% csrf_token %}<button class="btn" type="submit">Подтвердить</button></form>
+            <form method="post" action="{% url 'booking_action' booking.pk 'decline' %}" class="inline">{% csrf_token %}<button class="tlink" type="submit">Отклонить</button></form>
+          {% endif %}
+          {% if booking.status == "ok" %}<a class="btn quiet sm" href="{% url 'inspect' %}">Осмотр по фото</a>{% endif %}
+          {% if can_cancel %}
+            <form method="post" action="{% url 'booking_action' booking.pk 'cancel' %}" class="inline">{% csrf_token %}<button class="tlink danger" type="submit" data-confirm="Точно отменить?">Отменить бронь</button></form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

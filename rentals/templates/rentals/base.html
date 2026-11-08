@@ -1,0 +1,115 @@
+{% load static tanda %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<title>{% block title %}TANDA — аренда машин и бусиков в Кыргызстане{% endblock %}</title>
+<meta name="description" content="Легковые машины и бусики с водителем напрямую от владельцев по всему Кыргызстану. ОСАГО, проверка арендаторов и осмотр по фото.">
+<link rel="icon" type="image/svg+xml" href="{% static 'rentals/img/favicon.svg' %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@700;800&display=swap">
+<link rel="stylesheet" href="{% static 'rentals/css/tanda.css' %}">
+</head>
+<body>
+<a class="skip" href="#main">К содержимому</a>
+{% with page=request.resolver_match.url_name %}
+<header class="top">
+  <div class="bar">
+    <a class="logo" href="{% url 'catalog' %}" aria-label="TANDA, на главную">TANDA</a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="{% url 'catalog' %}"{% if page == 'catalog' or page == 'listing_detail' %} class="on" aria-current="page"{% endif %}>Арендовать</a>
+      <a href="{% url 'cabinet' %}"{% if page == 'cabinet' or page == 'booking_detail' %} class="on" aria-current="page"{% endif %}>Кабинет{% if nav_new_count %}<span class="count" aria-label="новых заявок: {{ nav_new_count }}">{{ nav_new_count }}</span>{% endif %}</a>
+      <a href="{% url 'inspect' %}"{% if page == 'inspect' %} class="on" aria-current="page"{% endif %}>Осмотр по фото</a>
+    </nav>
+    <div class="right">
+      <button class="tlink open-chat" type="button" data-open-chat>Помощник</button>
+      <a class="btn sm" href="{% url 'listing_create' %}">Сдать машину</a>
+      {% if user.is_authenticated %}
+        <a class="acct" href="{% url 'cabinet' %}" aria-label="Личный кабинет"><span class="avatar" aria-hidden="true">{{ user.get_full_name|default:user.username|initials }}</span><span class="nm">{{ user.get_full_name|default:user.username }}</span></a>
+      {% else %}
+        <a class="tlink" href="{% url 'login' %}{% if page != 'login' and page != 'register' %}?next={{ request.get_full_path|urlencode }}{% endif %}">Войти</a>
+      {% endif %}
+      <button class="burger" id="menuBtn" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+{% endwith %}
+
+<div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Меню">
+  <div class="menu-top"><span class="logo">TANDA</span><button class="x" id="menuClose" type="button" aria-label="Закрыть меню">×</button></div>
+  <nav class="menu-list" aria-label="Меню сайта">
+    <a href="{% url 'catalog' %}">Арендовать</a>
+    <a href="{% url 'listing_create' %}">Сдать машину</a>
+    <a href="{% url 'cabinet' %}">Личный кабинет{% if nav_new_count %}<span class="count">{{ nav_new_count }}</span>{% endif %}</a>
+    <a href="{% url 'inspect' %}">Осмотр по фото</a>
+    <button type="button" data-open-chat>Помощник</button>
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Выйти</button></form>
+    {% else %}
+      <a href="{% url 'login' %}">Войти</a>
+    {% endif %}
+  </nav>
+  <p class="menu-foot">{{ contact.city }} · {{ contact.phone }}</p>
+</div>
+
+<main id="main">
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <span class="logo">TANDA</span>
+        <p>Аренда легковых машин и бусиков напрямую от владельцев. Проверка арендаторов, ОСАГО и осмотр по фото в каждой поездке.</p>
+      </div>
+      <div>
+        <h4>Разделы</h4>
+        <a href="{% url 'catalog' %}">Арендовать</a>
+        <a href="{% url 'listing_create' %}">Сдать машину</a>
+        <a href="{% url 'cabinet' %}">Личный кабинет</a>
+        <a href="{% url 'inspect' %}">Осмотр по фото</a>
+      </div>
+      <div>
+        <h4>Контакты</h4>
+        <p style="margin-top:0">{{ contact.name }}<br>{{ contact.phone }}<br>{{ contact.city }}</p>
+      </div>
+    </div>
+    <div class="fbottom">
+      <span>© {% now "Y" %} TANDA · Прототип для хакатона Enactus, Salymbekov University. Демонстрационные объявления помечены владельцем «демо».</span>
+    </div>
+  </div>
+</footer>
+
+<aside class="chat" id="chat" aria-label="Помощник TANDA" data-url="{% url 'api_assistant' %}">
+  <div class="chat-head">
+    <div>
+      <h3>Помощник TANDA</h3>
+      <p>Подберёт машину под поездку. Можно писать на русском, кыргызском, казахском или английском.</p>
+    </div>
+    <button class="x" id="chatClose" type="button" aria-label="Закрыть помощника">×</button>
+  </div>
+  <div class="msgs" id="msgs" aria-live="polite"></div>
+  {% if not ai_enabled %}<p class="ai-off">Помощник заработает, когда в файл .env добавят ANTHROPIC_API_KEY.</p>{% endif %}
+  <div class="sugs" id="sugs">
+    <button class="sug" type="button">Нас 12 человек, едем на Иссык-Куль на 3 дня</button>
+    <button class="sug" type="button">Недорогая машина в Бишкеке на выходные</button>
+    <button class="sug" type="button">Какие документы нужны для аренды?</button>
+    <button class="sug" type="button">Ысык-Көлгө 4 кишиге машина керек</button>
+  </div>
+  <form class="chat-form" id="chatForm">
+    <label class="sr" for="chatInput">Сообщение помощнику</label>
+    <input id="chatInput" type="text" placeholder="Куда, сколько вас и на сколько дней?" autocomplete="off" maxlength="1000">
+    <button class="btn sm" type="submit" id="chatSend">Отправить</button>
+  </form>
+</aside>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite">
+  {% for message in messages %}<div class="toast{% if message.level_tag == 'error' %} error{% endif %}">{{ message }}</div>{% endfor %}
+</div>
+
+<script src="{% static 'rentals/js/tanda.js' %}" defer></script>
+</body>
+</html>
