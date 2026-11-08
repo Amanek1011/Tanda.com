@@ -7,7 +7,7 @@ python manage.py seed_demo --remove — убрать демо-объявлени
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles import finders
 from django.core.files import File
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from rentals.models import Listing, Profile
@@ -80,10 +80,12 @@ class Command(BaseCommand):
             )
             if not listing.photo:
                 photo_path = finders.find(f"rentals/img/{item['photo']}")
-                if not photo_path:
-                    raise CommandError(f"Не найден файл демо-фото: rentals/img/{item['photo']}")
-                with open(photo_path, "rb") as photo_file:
-                    listing.photo.save(item["photo"].rsplit("/", 1)[-1], File(photo_file), save=True)
+                if photo_path:
+                    try:
+                        with open(photo_path, "rb") as photo_file:
+                            listing.photo.save(item["photo"].rsplit("/", 1)[-1], File(photo_file), save=True)
+                    except OSError as e:
+                        self.stderr.write(f"Не удалось сохранить фото {item['photo']}: {e}")
             created += is_new
             updated += not is_new
         self.stdout.write(self.style.SUCCESS(
