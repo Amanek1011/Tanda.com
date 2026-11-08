@@ -53,6 +53,10 @@ render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")
 if render_hostname:
     ALLOWED_HOSTS.append(render_hostname)
     CSRF_TRUSTED_ORIGINS.append(f"https://{render_hostname}")
+vercel_hostname = os.environ.get("VERCEL_URL", "")
+if vercel_hostname:
+    ALLOWED_HOSTS.append(vercel_hostname)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{vercel_hostname}")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
