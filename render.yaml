@@ -26,6 +26,8 @@ services:
         value: /var/data/media
       - key: PRIVATE_MEDIA_ROOT
         value: /var/data/private_media
+      - key: DEMO_ACCOUNTS_ENABLED
+        value: "true"
       - key: WEB_CONCURRENCY
         value: "2"
       - key: ANTHROPIC_API_KEY
