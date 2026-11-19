@@ -1,11 +1,13 @@
 import random
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordChangeView, redirect_to_login
 from django.contrib.staticfiles import finders
+from django.db import transaction
 from django.db.models import Sum
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,16 +19,75 @@ from django.views.decorators.http import require_POST
 
 from . import rules
 from .forms import BookingForm, ListingForm, PhoneLoginForm, ProfileForm, RegisterForm
-from .models import Booking, Listing, incoming_bookings, profile_of
+from .models import Booking, Listing, Profile, incoming_bookings, profile_of
 from .utils import safe_next, trip_dates
 
 TABS = [("all", "Все"), ("car", "Легковые"), ("van", "Бусики")]
 SORTS = [("rating", "По рейтингу"), ("cheap", "Сначала дешевле"), ("expensive", "Сначала дороже")]
+DEMO_LOGIN_ACCOUNTS = {
+    "buyer": {
+        "username": "demo-renter",
+        "first_name": "Демо",
+        "last_name": "Покупатель",
+        "profile_role": "renter",
+        "label": "покупатель",
+    },
+    "owner": {
+        "username": "demo-azamat",
+        "first_name": "Азамат",
+        "last_name": "",
+        "profile_role": "owner",
+        "label": "владелец",
+    },
+}
 
 
 def _phone_of(user):
     profile = getattr(user, "profile", None)
     return rules.format_phone(profile.phone) if profile and profile.phone else ""
+
+
+@transaction.atomic
+def _get_demo_account(role):
+    account = DEMO_LOGIN_ACCOUNTS[role]
+    User = get_user_model()
+    user, _ = User.objects.get_or_create(
+        username=account["username"],
+        defaults={"first_name": account["first_name"], "last_name": account["last_name"]},
+    )
+    if user.has_usable_password():
+        user.set_unusable_password()
+        user.save(update_fields=["password"])
+
+    profile, _ = Profile.objects.get_or_create(
+        user=user,
+        defaults={"city": "Бишкек", "role": account["profile_role"]},
+    )
+    if profile.role != account["profile_role"]:
+        profile.role = account["profile_role"]
+        profile.save(update_fields=["role"])
+
+    if role == "owner":
+        Listing.objects.get_or_create(
+            owner=user,
+            title="Toyota Camry 70",
+            defaults={
+                "kind": "car",
+                "year": 2019,
+                "city": "Бишкек",
+                "seats": 5,
+                "gear": "автомат",
+                "fuel": "бензин",
+                "price": 3500,
+                "description": "Демо-автомобиль для знакомства с TANDA.",
+                "color": "#E7E5E0",
+                "rating": "4.9",
+                "trips": 34,
+                "has_osago": True,
+                "is_demo": True,
+            },
+        )
+    return user
 
 
 # ---------- Каталог ----------
@@ -335,6 +396,27 @@ class TandaLoginView(LoginView):
     template_name = "rentals/auth/login.html"
     authentication_form = PhoneLoginForm
     redirect_authenticated_user = True
+
+    def post(self, request, *args, **kwargs):
+        demo_role = request.POST.get("demo_role")
+        if settings.DEMO_ACCOUNTS_ENABLED and demo_role in DEMO_LOGIN_ACCOUNTS:
+            user = _get_demo_account(demo_role)
+            if not user.is_active:
+                messages.error(request, "Демо-аккаунт временно недоступен.")
+                return redirect("login")
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            messages.success(request, f"Вы вошли как {DEMO_LOGIN_ACCOUNTS[demo_role]['label']}.")
+            return redirect(self.get_success_url())
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if settings.DEMO_ACCOUNTS_ENABLED:
+            context["demo_accounts"] = [
+                {"role": "buyer", "label": "покупатель"},
+                {"role": "owner", "label": "владелец"},
+            ]
+        return context
 
     def form_valid(self, form):
         response = super().form_valid(form)

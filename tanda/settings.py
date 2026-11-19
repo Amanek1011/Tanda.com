@@ -39,6 +39,7 @@ def env_list(name, default=""):
 
 
 DEBUG = env_bool("DEBUG", default=True)
+DEMO_ACCOUNTS_ENABLED = env_bool("DEMO_ACCOUNTS_ENABLED", default=DEBUG)
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 if not SECRET_KEY:

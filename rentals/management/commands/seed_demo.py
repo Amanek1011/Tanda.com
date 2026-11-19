@@ -88,6 +88,7 @@ class Command(BaseCommand):
                         self.stderr.write(f"Не удалось сохранить фото {item['photo']}: {e}")
             created += is_new
             updated += not is_new
+
         self.stdout.write(self.style.SUCCESS(
             f"Демо-каталог готов: добавлено {created}, обновлено {updated}. "
             "Заявки на демо-машины подтверждает администратор (python manage.py createsuperuser)."

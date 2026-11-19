@@ -15,6 +15,21 @@
       {% include "rentals/_field.html" with field=form.password cls="full" %}
       <button class="btn full" type="submit">Войти</button>
     </form>
+    {% if demo_accounts %}
+      <section class="demo-access" aria-labelledby="demo-access-title">
+        <h2 id="demo-access-title">Войти без регистрации</h2>
+        <div class="demo-access__buttons">
+          {% for account in demo_accounts %}
+            <form method="post" action="{% url 'login' %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ next }}">
+              <input type="hidden" name="demo_role" value="{{ account.role }}">
+              <button class="btn demo-access__button" type="submit">Войти как {{ account.label }}</button>
+            </form>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
     <p class="alt">Нет аккаунта? <a href="{% url 'register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Зарегистрироваться</a></p>
   </div>
 </div>

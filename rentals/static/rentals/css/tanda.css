@@ -197,6 +197,12 @@ label:hover .file,label:focus-within .file{border-color:var(--accent)}
 .auth .lead{color:var(--muted);margin-bottom:22px}
 .auth .alt{margin-top:22px;color:var(--muted);font-size:14px}
 .auth .alt a{color:var(--text);font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.demo-access{margin-top:24px;padding:20px;background:var(--surface-2);border:1px solid var(--line)}
+.demo-access h2{font-size:18px}
+.demo-access p{margin:8px 0 16px;color:var(--muted);font-size:14px}
+.demo-access__buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.demo-access__button{width:100%;font-size:14px}
+@media (max-width:520px){.demo-access__buttons{grid-template-columns:1fr}}
 
 /* Страница машины */
 .sheet{position:relative;width:100%;background:var(--surface)}

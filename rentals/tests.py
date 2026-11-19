@@ -111,6 +111,34 @@ class MediaServingTests(TestCase):
 
 
 class AccountTests(SiteTestCase):
+    @override_settings(DEMO_ACCOUNTS_ENABLED=True)
+    def test_demo_buttons_create_and_log_into_accounts_without_password(self):
+        response = self.client.get(reverse("login"))
+        self.assertContains(response, "Войти как покупатель")
+        self.assertContains(response, "Войти как владелец")
+
+        response = self.client.post(reverse("login"), {"demo_role": "buyer"})
+        self.assertRedirects(response, reverse("cabinet"))
+        renter = User.objects.get(username="demo-renter")
+        self.assertEqual(renter.profile.role, "renter")
+        self.assertFalse(renter.has_usable_password())
+
+        self.client.logout()
+        response = self.client.post(reverse("login"), {"demo_role": "owner"})
+        self.assertRedirects(response, reverse("cabinet"))
+        owner = User.objects.get(username="demo-azamat")
+        self.assertEqual(owner.profile.role, "owner")
+        self.assertFalse(owner.has_usable_password())
+        self.assertTrue(owner.listings.filter(is_demo=True).exists())
+
+    @override_settings(DEMO_ACCOUNTS_ENABLED=False)
+    def test_demo_login_is_disabled_when_not_configured(self):
+        response = self.client.get(reverse("login"))
+        self.assertNotContains(response, "Войти как покупатель")
+        response = self.client.post(reverse("login"), {"demo_role": "buyer"})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="demo-renter").exists())
+
     def test_register_and_login_by_phone(self):
         res = self.client.post(reverse("register"), {
             "name": "Айбек Асанов", "phone": "+996 555 123 456", "city": "Ош", "role": "both",
